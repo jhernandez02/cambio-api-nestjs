@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 
-export class CreateCambioDto {
+export class CambioDto {
     @ApiProperty({
         example: 'USD',
         required: true
@@ -8,7 +8,7 @@ export class CreateCambioDto {
     moneda: string;
 
     @ApiProperty({
-        example: '3.75',
+        example: 3.75,
         required: true
     })
     tipo_cambio: number;
