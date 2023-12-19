@@ -1,49 +1,38 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Inject } from '@nestjs/common';
+import { Redis } from 'ioredis';
 import { JwtService } from "@nestjs/jwt";
-import { CambioEntity } from './entities/cambio.entity';
-import { CreateCambioDto } from './dto/create-cambio.dto';
-import { RequestCambioDto } from './dto/request-cambio.dto ';
-import { ResponseCambioDto } from './dto/response-cambio.dto';
-import { UpdateCambioDto } from './dto/update-cambio.dto';
+import { CambioDto } from './dto/cambio.dto';
 
 @Injectable()
 export class AppService {
   constructor(
-    private readonly jwtService: JwtService
+    private readonly jwtService: JwtService,
+    @Inject('RedisClient') private readonly redisClient: Redis
   ) {}
 
-  async getToken() {
+  async getToken(): Promise<{}> {
     const payload = { };
     const token = await this.jwtService.signAsync({payload});
     return {token};
   }
 
-  async create(data: CreateCambioDto): Promise<CambioEntity>{
-    const response = {
-      id: 1,
-      moneda: data.moneda,
-      tipo_cambio: data.tipo_cambio
-    };
-    return response;
+  async getAll(): Promise<object> {
+    const result = await this.redisClient.keys("*");
+    return result;
   }
 
-  async change(data: RequestCambioDto): Promise<ResponseCambioDto>{
-    const response = {
-      monto: data.monto,
-      monto_tipo_cambio: 375.00,
-      moneda_origen: data.moneda_origen,
-      moneda_destino: data.moneda_destino,
-      tipo_cambio: 3.75
-    }
-    return response;
+  async save(data: CambioDto): Promise<string>{
+    const result = await this.redisClient.set(data.moneda, JSON.stringify({tipo_cambio: data.tipo_cambio}));
+    return result;
   }
 
-  async update(data: CreateCambioDto): Promise<CambioEntity>{
-    const response = {
-      id: 1,
-      moneda: data.moneda,
-      tipo_cambio: data.tipo_cambio
+  async getExchangeRates(data: Array<string>): Promise<object>{
+    const result = await this.redisClient.mget(data);
+    const json = {
+      origen: JSON.parse(result[0]).tipo_cambio,
+      destino: JSON.parse(result[1]).tipo_cambio,
     };
-    return response;
+    return json;
   }
+
 }
